@@ -1,0 +1,11 @@
+import { Terminal } from 'lucide-react'
+import type { HackerCommandEvent, TelemetryEvent } from '@/types/events'
+
+function time(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? '—' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }
+
+export function HackerMonitor({ events }: { events: TelemetryEvent[] }) {
+  const items = events.filter((event): event is HackerCommandEvent => event.type === 'hacker_command').slice(0, 8)
+  return <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_8px_30px_rgb(15_23_42_/_0.04)]"><div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4"><div><div className="flex items-center gap-2"><Terminal className="size-4 text-cyan-300" /><h3 className="text-sm font-semibold">Hacker activity</h3></div><p className="mt-1 text-xs text-slate-500">Commands received from active sessions</p></div><span className="font-mono text-[10px] text-zinc-600">LIVE FEED</span></div><div className="min-h-[260px]">{items.length ? <div className="divide-y divide-white/[0.05]">{items.map((event) => <div className="grid grid-cols-[auto_1fr] gap-4 px-5 py-4" key={event.id}><span className="pt-0.5 font-mono text-[11px] text-zinc-600">{time(event.timestamp)}</span><div className="min-w-0"><code className="block truncate rounded-md border border-cyan-400/10 bg-black/30 px-3 py-2 font-mono text-xs text-cyan-100">$ {event.command}</code><div className="mt-2 flex gap-3 text-[10px] text-zinc-600"><span>SESSION {event.sessionId ?? '—'}</span><span>{event.source ?? 'unknown source'}</span></div></div></div>)}</div> : <Empty label="Awaiting hacker commands" detail="Incoming command telemetry will appear here." />}</div></section>
+}
+
+function Empty({ label, detail }: { label: string; detail: string }) { return <div className="flex min-h-[260px] flex-col items-center justify-center px-5 text-center"><div className="mb-3 flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-zinc-600"><Terminal className="size-4" /></div><p className="text-sm text-zinc-400">{label}</p><p className="mt-1 text-xs text-zinc-600">{detail}</p></div> }
