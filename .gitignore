@@ -7,6 +7,14 @@ __v0_jsx-dev-runtime.ts
 .v0-trash/
 .vercel/
 
+# Python backend
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+backend/.env
+backend/.phantomnet/
+
 # Environment variables
 .env*.local
 
