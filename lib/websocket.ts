@@ -1,4 +1,4 @@
-import type { TelemetryEvent } from '@/types/events'
+import { isTelemetryEvent, type TelemetryEvent } from '@/types/events'
 
 export type WebSocketStatus = 'connecting' | 'open' | 'closed' | 'error'
 
@@ -12,6 +12,7 @@ export class TelemetrySocket {
   private readonly eventListeners = new Set<Listener>()
   private readonly statusListeners = new Set<StatusListener>()
   private manuallyClosed = false
+  private lastEventId: string | null = null
 
   constructor(private readonly url: string, private readonly maxReconnectDelay = 15000) {}
 
@@ -19,7 +20,11 @@ export class TelemetrySocket {
     if (!this.url || typeof window === 'undefined') return
     this.manuallyClosed = false
     this.setStatus('connecting')
-    this.socket = new WebSocket(this.url)
+    const separator = this.url.includes('?') ? '&' : '?'
+    const url = this.lastEventId
+      ? `${this.url}${separator}after=${encodeURIComponent(this.lastEventId)}`
+      : this.url
+    this.socket = new WebSocket(url)
     this.socket.addEventListener('open', () => {
       this.reconnectAttempts = 0
       this.setStatus('open')
@@ -27,8 +32,9 @@ export class TelemetrySocket {
     this.socket.addEventListener('message', (message) => {
       try {
         const payload: unknown = JSON.parse(message.data as string)
-        if (payload && typeof payload === 'object' && 'type' in payload) {
-          this.eventListeners.forEach((listener) => listener(payload as TelemetryEvent))
+        if (isTelemetryEvent(payload)) {
+          this.lastEventId = payload.id
+          this.eventListeners.forEach((listener) => listener(payload))
         }
       } catch {
         // Invalid frames are ignored; telemetry is untrusted input.
